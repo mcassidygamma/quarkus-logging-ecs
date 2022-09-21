@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,109 +17,122 @@
 
 package de.spinscale.quarkus.logging.ecs.runtime;
 
-import org.jboss.logmanager.ExtLogRecord;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.logging.Level;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.stream.JsonParser;
-import java.io.StringReader;
-import java.util.HashMap;
-import java.util.logging.Level;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.jboss.logmanager.ExtLogRecord;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-class EcsLoggingFormatterTests {
+import co.elastic.logging.jboss.logmanager.EcsFormatter;
 
-    private final ExtLogRecord record = new ExtLogRecord(Level.INFO, "my message", "logger_class_name");
-    private final EcsLoggingConfig config = new EcsLoggingConfig();
+class EcsLoggingFormatterTests
+{
 
-    @BeforeEach
-    public void setup() {
-        config.enable = true;
-        config.serviceName = "my_favourite_service";
-        record.setLoggerName("my_logger_name");
-    }
+	private final ExtLogRecord record = new ExtLogRecord(Level.INFO, "my message", "logger_class_name");
+	private final EcsLoggingConfig config = new EcsLoggingConfig();
 
-    @Test
-    public void testEnabled() {
-        JsonObject root = getLoggingJson(record);
-        assertThat(root).containsKeys("@timestamp", "log.level", "message", "service.name", "process.thread.name", "log.logger");
-        assertThat(root.getString("log.level")).isEqualTo("INFO");
-        assertThat(root.getString("log.logger")).isEqualTo("my_logger_name");
-        assertThat(root).doesNotContainKey("log.origin");
-        assertThat(root.getString("service.name")).isEqualTo("my_favourite_service");
-        assertThat(root.getString("service.environment")).isEqualTo("prod");
-    }
+	@BeforeEach
+	public void setup()
+	{
+		config.enable = true;
+		config.serviceName = "my_favourite_service";
+		record.setLoggerName("my_logger_name");
+	}
 
-    @Test
-    public void testStackTraceAsString() {
-        record.setThrown(new RuntimeException("blabla"));
+	@Test
+	public void testEnabled()
+	{
+		final JsonObject root = getLoggingJson(record);
+		assertThat(root).containsKeys("@timestamp", "log.level", "message", "service.name", "process.thread.name", "log.logger");
+		assertThat(root.getString("log.level")).isEqualTo("INFO");
+		assertThat(root.getString("log.logger")).isEqualTo("my_logger_name");
+		assertThat(root).doesNotContainKey("log.origin");
+		assertThat(root.getString("service.name")).isEqualTo("my_favourite_service");
+		assertThat(root.getString("service.environment")).isEqualTo("prod");
+	}
 
-        JsonObject root = getLoggingJson(record);
-        assertThat(root).containsKeys("@timestamp", "log.level", "message", "service.name", "process.thread.name", "log.logger");
-        assertThat(root.getString("error.message")).isEqualTo("blabla");
-        assertThat(root.getString("error.stack_trace").length()).isGreaterThan(1000);
-    }
+	@Test
+	public void testStackTraceAsString()
+	{
+		record.setThrown(new RuntimeException("blabla"));
 
-    @Test
-    public void testStackTracesAsArray() {
-        config.stackTraceAsArray = true;
-        record.setThrown(new RuntimeException("blabla"));
+		final JsonObject root = getLoggingJson(record);
+		assertThat(root).containsKeys("@timestamp", "log.level", "message", "service.name", "process.thread.name", "log.logger");
+		assertThat(root.getString("error.message")).isEqualTo("blabla");
+		assertThat(root.getString("error.stack_trace").length()).isGreaterThan(1000);
+	}
 
-        JsonObject root = getLoggingJson(record);
-        assertThat(root).containsKeys("@timestamp", "log.level", "message", "service.name", "process.thread.name", "log.logger");
-        assertThat(root.getString("error.message")).isEqualTo("blabla");
-        final JsonArray array = root.getJsonArray("error.stack_trace");
-        assertThat(array.size()).isGreaterThan(10);
-    }
+	@Test
+	public void testStackTracesAsArray()
+	{
+		config.stackTraceAsArray = true;
+		record.setThrown(new RuntimeException("blabla"));
 
-    @Test
-    public void testIncludeOrigin() {
-        config.includeOrigin = true;
-        record.setSourceFileName("MySource.java");
-        record.setSourceClassName("MySource");
-        record.setSourceLineNumber(123);
-        record.setSourceMethodName("method_name");
+		final JsonObject root = getLoggingJson(record);
+		assertThat(root).containsKeys("@timestamp", "log.level", "message", "service.name", "process.thread.name", "log.logger");
+		assertThat(root.getString("error.message")).isEqualTo("blabla");
+		final JsonArray array = root.getJsonArray("error.stack_trace");
+		assertThat(array.size()).isGreaterThan(10);
+	}
 
-        JsonObject root = getLoggingJson(record);
-        assertThat(root).containsKey("log.origin");
-        final JsonObject logOrigin = root.get("log.origin").asJsonObject();
-        assertThat(logOrigin).containsKeys("file.line", "file.name", "function");
-        assertThat(logOrigin.getInt("file.line")).isEqualTo(123);
-        assertThat(logOrigin.getString("file.name")).isEqualTo("MySource.java");
-        assertThat(logOrigin.getString("function")).isEqualTo("method_name");
-    }
+	@Test
+	public void testIncludeOrigin()
+	{
+		config.includeOrigin = true;
+		record.setSourceFileName("MySource.java");
+		record.setSourceClassName("MySource");
+		record.setSourceLineNumber(123);
+		record.setSourceMethodName("method_name");
 
-    @Test
-    public void testAdditionalFields() {
-        config.additionalFields = new HashMap<>();
-        config.additionalFields.put("foo", "bar");
-        config.additionalFields.put("spam", "eggs");
+		final JsonObject root = getLoggingJson(record);
+		assertThat(root).containsKey("log.origin");
+		final JsonObject logOrigin = root.get("log.origin").asJsonObject();
+		assertThat(logOrigin).containsKeys("file.line", "file.name", "function");
+		assertThat(logOrigin.getInt("file.line")).isEqualTo(123);
+		assertThat(logOrigin.getString("file.name")).isEqualTo("MySource.java");
+		assertThat(logOrigin.getString("function")).isEqualTo("method_name");
+	}
 
-        JsonObject root = getLoggingJson(record);
-        assertThat(root).containsKeys("spam", "foo");
-        assertThat(root.getString("spam")).isEqualTo("eggs");
-        assertThat(root.getString("foo")).isEqualTo("bar");
-    }
+	@Test
+	public void testAdditionalFields()
+	{
+		config.additionalFields = new HashMap<>();
+		config.additionalFields.put("foo", "bar");
+		config.additionalFields.put("spam", "eggs");
 
-    @Test
-    public void testMdc() {
-        record.putMdc("mdc", "hell yeah");
-        JsonObject root = getLoggingJson(record);
-        assertThat(root).containsKey("mdc");
-        assertThat(root.getString("mdc")).isEqualTo("hell yeah");
-    }
+		final JsonObject root = getLoggingJson(record);
+		assertThat(root).containsKeys("spam", "foo");
+		assertThat(root.getString("spam")).isEqualTo("eggs");
+		assertThat(root.getString("foo")).isEqualTo("bar");
+	}
 
-    private JsonObject getLoggingJson(ExtLogRecord record) {
-        EcsLoggingFormatter formatter = new EcsLoggingFormatter(config);
-        final String json = formatter.format(record);
+	@Test
+	public void testMdc()
+	{
+		record.putMdc("mdc", "hell yeah");
+		final JsonObject root = getLoggingJson(record);
+		assertThat(root).containsKey("mdc");
+		assertThat(root.getString("mdc")).isEqualTo("hell yeah");
+	}
 
-        try (final JsonParser parser = Json.createParser(new StringReader(json))) {
-            parser.next();
-            return parser.getObject();
-        }
-    }
+	private JsonObject getLoggingJson(final ExtLogRecord record)
+	{
+		final EcsFormatter formatter = EcsFormatterFactory.newEcsFormatter(config);
+		final String json = formatter.format(record);
+
+		try (final JsonParser parser = Json.createParser(new StringReader(json)))
+		{
+			parser.next();
+			return parser.getObject();
+		}
+	}
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,13 +17,7 @@
 
 package de.spinscale.quarkus.logging.ecs.deployment;
 
-import io.quarkus.runtime.logging.InitialConfigurator;
-import io.quarkus.test.QuarkusUnitTest;
-import org.jboss.logmanager.ExtFormatter;
-import org.jboss.logmanager.handlers.ConsoleHandler;
-import org.jboss.logmanager.handlers.DelayedHandler;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 import java.util.logging.Formatter;
@@ -32,31 +26,40 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.jboss.logmanager.ExtFormatter;
+import org.jboss.logmanager.handlers.ConsoleHandler;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class EcsConfigTest {
+import io.quarkus.bootstrap.logging.InitialConfigurator;
+import io.quarkus.bootstrap.logging.QuarkusDelayedHandler;
+import io.quarkus.test.QuarkusUnitTest;
 
-    @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
-            .withConfigurationResource("logging-ecs-default-config.properties");
+public class EcsConfigTest
+{
 
-    @Test
-    public void testDefaultConfiguration() {
-        LogManager logManager = LogManager.getLogManager();
-        assertThat(logManager).isInstanceOf(org.jboss.logmanager.LogManager.class);
+	@RegisterExtension
+	static final QuarkusUnitTest config = new QuarkusUnitTest()
+			.withConfigurationResource("logging-ecs-default-config.properties");
 
-        DelayedHandler delayedHandler = InitialConfigurator.DELAYED_HANDLER;
-        assertThat(Logger.getLogger("").getHandlers()).contains(delayedHandler);
-        assertThat(delayedHandler.getLevel()).isEqualTo(Level.ALL);
+	@Test
+	public void testDefaultConfiguration()
+	{
+		final LogManager logManager = LogManager.getLogManager();
+		assertThat(logManager).isInstanceOf(org.jboss.logmanager.LogManager.class);
 
-        Handler handler = Arrays.stream(delayedHandler.getHandlers())
-                .filter(h -> (h instanceof ConsoleHandler))
-                .findFirst().orElse(null);
-        assertThat(handler).isNotNull();
-        assertThat(handler.getLevel()).isEqualTo(Level.ALL);
+		final QuarkusDelayedHandler delayedHandler = InitialConfigurator.DELAYED_HANDLER;
+		assertThat(Logger.getLogger("").getHandlers()).contains(delayedHandler);
+		assertThat(delayedHandler.getLevel()).isEqualTo(Level.ALL);
 
-        Formatter formatter = handler.getFormatter();
-        assertThat(formatter).isNotNull();
-        assertThat(formatter).isInstanceOf(ExtFormatter.class);
-    }
+		final Handler handler = Arrays.stream(delayedHandler.getHandlers())
+				.filter(h -> (h instanceof ConsoleHandler))
+				.findFirst().orElse(null);
+		assertThat(handler).isNotNull();
+		assertThat(handler.getLevel()).isEqualTo(Level.ALL);
+
+		final Formatter formatter = handler.getFormatter();
+		assertThat(formatter).isNotNull();
+		assertThat(formatter).isInstanceOf(ExtFormatter.class);
+	}
 }

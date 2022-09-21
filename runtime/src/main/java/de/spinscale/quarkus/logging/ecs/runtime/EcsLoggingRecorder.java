@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,20 +17,23 @@
 
 package de.spinscale.quarkus.logging.ecs.runtime;
 
-import io.quarkus.runtime.RuntimeValue;
-import io.quarkus.runtime.annotations.Recorder;
-
 import java.util.Optional;
 import java.util.logging.Formatter;
 
+import io.quarkus.runtime.RuntimeValue;
+import io.quarkus.runtime.annotations.Recorder;
+
 @Recorder
-public class EcsLoggingRecorder {
+public class EcsLoggingRecorder
+{
 
-    public RuntimeValue<Optional<Formatter>> initializeEcsLogging(final EcsLoggingConfig config) {
-        if (!config.enable) {
-            return new RuntimeValue<>(Optional.empty());
-        }
+	public RuntimeValue<Optional<Formatter>> initializeEcsLogging(final EcsLoggingConfig config)
+	{
+		if (!config.enable)
+		{
+			return new RuntimeValue<>(Optional.empty());
+		}
 
-        return new RuntimeValue<>(Optional.of(new EcsLoggingFormatter(config)));
-    }
+		return new RuntimeValue<>(Optional.of(EcsFormatterFactory.newEcsFormatter(config)));
+	}
 }
