@@ -43,8 +43,8 @@ class EcsLoggingFormatterTests
 	@BeforeEach
 	public void setup()
 	{
-		config.enable = true;
-		config.serviceName = "my_favourite_service";
+		config.ecs.enable = true;
+		config.ecs.serviceName = "my_favourite_service";
 		record.setLoggerName("my_logger_name");
 	}
 
@@ -74,7 +74,7 @@ class EcsLoggingFormatterTests
 	@Test
 	public void testStackTracesAsArray()
 	{
-		config.stackTraceAsArray = true;
+		config.ecs.stackTraceAsArray = true;
 		record.setThrown(new RuntimeException("blabla"));
 
 		final JsonObject root = getLoggingJson(record);
@@ -87,7 +87,7 @@ class EcsLoggingFormatterTests
 	@Test
 	public void testIncludeOrigin()
 	{
-		config.includeOrigin = true;
+		config.ecs.includeOrigin = true;
 		record.setSourceFileName("MySource.java");
 		record.setSourceClassName("MySource");
 		record.setSourceLineNumber(123);
@@ -105,9 +105,9 @@ class EcsLoggingFormatterTests
 	@Test
 	public void testAdditionalFields()
 	{
-		config.additionalFields = new HashMap<>();
-		config.additionalFields.put("foo", "bar");
-		config.additionalFields.put("spam", "eggs");
+		config.ecs.additionalFields = new HashMap<>();
+		config.ecs.additionalFields.put("foo", "bar");
+		config.ecs.additionalFields.put("spam", "eggs");
 
 		final JsonObject root = getLoggingJson(record);
 		assertThat(root).containsKeys("spam", "foo");

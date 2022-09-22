@@ -19,45 +19,63 @@ package de.spinscale.quarkus.logging.ecs.runtime;
 
 import java.util.Map;
 
+import io.quarkus.runtime.annotations.ConfigGroup;
 import io.quarkus.runtime.annotations.ConfigItem;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 
-@ConfigRoot(phase = ConfigPhase.RUN_TIME, name = "logging.ecs")
+@ConfigRoot(phase = ConfigPhase.RUN_TIME, name = "log")
 public class EcsLoggingConfig
 {
-
 	/**
-	 * Determine whether to enable the JSON console ECS formatting extension, which disables "normal" console formatting.
+	 * ECS logging
 	 */
-	@ConfigItem(name = ConfigItem.PARENT, defaultValue = "true")
-	boolean enable;
+	@ConfigItem(name = "ecs")
+	EcsConfig ecs;
 
-	/**
-	 * The service name to use. This is mandatory
-	 * Becomes "service-name" in the configuration file
-	 */
-	@ConfigItem(defaultValue = "${quarkus.application.name}")
-	String serviceName;
+	@ConfigGroup
+	public static class EcsConfig
+	{
+		/**
+		 * Determine whether to enable the JSON console ECS formatting extension, which disables "normal" console formatting.
+		 */
+		@ConfigItem(defaultValue = "true")
+		boolean enable;
 
-	/**
-	 * Determine whether stack traces should be serialized as JSON array.
-	 * Becomes "stack-trace-as-array" in the configuration file
-	 */
-	@ConfigItem(defaultValue = "false")
-	boolean stackTraceAsArray;
+		/**
+		 * The service name to use. This is mandatory
+		 * Becomes "service-name" in the configuration file
+		 */
+		@ConfigItem(defaultValue = "${quarkus.application.name}")
+		String serviceName;
 
-	/**
-	 * Determine whether origins should be looked up, which may slow down the logging
-	 * Becomes "include-origin" in the configuration file
-	 */
-	@ConfigItem(defaultValue = "false")
-	boolean includeOrigin;
+		/**
+		 * The service environment to use. This is mandatory
+		 * Becomes "service-environment" in the configuration file
+		 */
+		@ConfigItem(defaultValue = "${quarkus.profile}")
+		String serviceEnvironment;
 
-	/**
-	 * Any additional key value pairs you would like to index
-	 * Becomes "additional-fields" in the configuration file
-	 */
-	@ConfigItem
-	Map<String, String> additionalFields;
+		/**
+		 * Determine whether stack traces should be serialized as JSON array.
+		 * Becomes "stack-trace-as-array" in the configuration file
+		 */
+		@ConfigItem(defaultValue = "false")
+		boolean stackTraceAsArray;
+
+		/**
+		 * Determine whether origins should be looked up, which may slow down the logging
+		 * Becomes "include-origin" in the configuration file
+		 */
+		@ConfigItem(defaultValue = "false")
+		boolean includeOrigin;
+
+		/**
+		 * Any additional key value pairs you would like to index
+		 * Becomes "additional-fields" in the configuration file
+		 */
+		@ConfigItem
+		Map<String, String> additionalFields;
+	}
+
 }

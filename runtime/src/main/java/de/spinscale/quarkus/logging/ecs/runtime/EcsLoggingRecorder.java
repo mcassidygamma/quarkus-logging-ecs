@@ -29,7 +29,7 @@ public class EcsLoggingRecorder
 
 	public RuntimeValue<Optional<Formatter>> initializeEcsLogging(final EcsLoggingConfig config)
 	{
-		if (!config.enable)
+		if (!config.ecs.enable)
 		{
 			return new RuntimeValue<>(Optional.empty());
 		}

@@ -13,14 +13,26 @@ public final class EcsFormatterFactory
 
 	public static EcsFormatter newEcsFormatter(final EcsLoggingConfig config)
 	{
-		final var formatter = new EcsFormatter();
-		formatter.setServiceName(config.serviceName);
-		formatter.setIncludeOrigin(config.includeOrigin);
-		formatter.setStackTraceAsArray(config.stackTraceAsArray);
-
-		if (!config.additionalFields.isEmpty())
+		EcsFormatter formatter;
+		try
 		{
-			formatter.setAdditionalFields(config.additionalFields.entrySet().stream().map(e -> String.format("%s=%s", e.getKey(), e.getValue())).collect(Collectors.joining(",")));
+			Class.forName("io.quarkus.opentelemetry.runtime.OpenTelemetryUtil");
+			formatter = new OpenTelementryEcsFormatter();
+		}
+		catch (final ClassNotFoundException e)
+		{
+			formatter = new EcsFormatter();
+		}
+
+		formatter.setServiceName(config.ecs.serviceName);
+		formatter.setServiceEnvironment(config.ecs.serviceEnvironment);
+		formatter.setIncludeOrigin(config.ecs.includeOrigin);
+		formatter.setStackTraceAsArray(config.ecs.stackTraceAsArray);
+
+		if (!config.ecs.additionalFields.isEmpty())
+		{
+			formatter.setAdditionalFields(
+					config.ecs.additionalFields.entrySet().stream().map(e -> String.format("%s=%s", e.getKey(), e.getValue())).collect(Collectors.joining(",")));
 		}
 		return formatter;
 	}
